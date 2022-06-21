@@ -76,6 +76,10 @@
     picker.modalPresentationStyle = UIModalPresentationCustom;
     picker.transitioningDelegate = self;
 
+    if (@available(iOS 13.4, *)) {
+        [picker.datePicker addTarget:self action:@selector(handleDatePickerTap:) forControlEvents:UIControlEventEditingDidBegin];
+    }
+
     picker.doneHandler = ^(id sender) {
         ModalPickerViewController *modelPicker = (ModalPickerViewController *)sender;
         if (modelPicker == nil) {
@@ -95,12 +99,12 @@
 }
 
 - (void)configureDatePicker:(NSMutableDictionary *)optionsOrNil datePicker:(UIDatePicker *)datePicker {
-    
+
     // Prefer wheels style on iOS 14.
     if (@available(iOS 13.4, *)) {
         datePicker.preferredDatePickerStyle = UIDatePickerStyleWheels;
     }
-    
+
     // Mode (must be set first, otherwise minuteInterval > 1 acts wonky).
     NSString *mode = [optionsOrNil objectForKey:@"mode"];
     if ([mode isEqualToString:@"date"]) {
@@ -110,11 +114,11 @@
     } else {
         datePicker.datePickerMode = UIDatePickerModeDateAndTime;
     }
-   
+
     // Locale.
     NSString *localeString = [optionsOrNil objectForKeyNotNull:@"locale"];
     datePicker.locale = localeString.length > 0 ? [[NSLocale alloc] initWithLocaleIdentifier:localeString] : [NSLocale currentLocale];
-    
+
     // Texts.
     self.modalPicker.doneText = [optionsOrNil objectForKeyNotNull:@"okText"];
     self.modalPicker.cancelText = [optionsOrNil objectForKeyNotNull:@"cancelText"];
@@ -124,11 +128,11 @@
     // Minute interval.
     NSInteger minuteInterval = [[optionsOrNil objectForKeyNotNull:@"minuteInterval"] ?: [NSNumber numberWithInt:1] intValue];
     datePicker.minuteInterval = minuteInterval;
-    
+
     // Allow old/future dates.
     BOOL allowOldDates = [[optionsOrNil objectForKeyNotNull:@"allowOldDates"] ?: [NSNumber numberWithInt:1] boolValue];
     BOOL allowFutureDates = [[optionsOrNil objectForKeyNotNull:@"allowFutureDates"] ?: [NSNumber numberWithInt:1] boolValue];
-    
+
     // Min/max dates.
     NSDate *today = [NSDate today];
     long long todayTicks = ((long long)[today timeIntervalSince1970]) * DDBIntervalFactor;
@@ -146,7 +150,7 @@
     } else {
         datePicker.maximumDate = nil;
     }
-    
+
     // Selected date.
     long long ticks = [[optionsOrNil objectForKey:@"ticks"] longLongValue];
     [datePicker setDate:[[NSDate dateWithTimeIntervalSince1970:(ticks / DDBIntervalFactor)] roundToMinuteInterval:minuteInterval] animated:FALSE];
@@ -160,7 +164,7 @@
         long long ticks = ((long long)[date timeIntervalSince1970]) * DDBIntervalFactor;
         [result setObject:[NSNumber numberWithLongLong:ticks] forKey:@"ticks"];
     }
-    
+
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:result];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:_callbackId];
 }
